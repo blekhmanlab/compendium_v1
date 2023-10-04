@@ -24,10 +24,13 @@ The `/visualization` directory contains the R code used to generate the figures 
 * `figure1.R` generates the panels in Figure 1 and associated supplementary material. It requires one external file, `rarefaction.rds`, that is stored in the `/data` directory.
 * `visualization/figure2.R` generates the panels in Figure 2 and associated supplementary material. It requires several external files:
   * In the `data/` directory:
-      * `nmds.rds`
-      * `pcoa_points.rds`
       * `rarefaction_diversity.rds`
       * `regions.csv`
-  * `sample_metadata.tsv`, available in the paper's [associated Zenodo repository](https://doi.org/10.5281/zenodo.8186993).
+  * From the paper's [associated Zenodo repository](https://doi.org/10.5281/zenodo.8186993):
+    * `sample_metadata.tsv`
+  * Generated bo `pcoa.R`:
+    * `nmds.rds`
+    * `pcoa_points.rds`
+
 --
 If you have any questions, please contact corresponding author Ran Blekhman at blekhman (at) uchicago.edu. Thanks.
