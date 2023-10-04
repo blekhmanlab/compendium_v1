@@ -6,6 +6,7 @@ This repository contains code related to the manuscript "Integration of 168,000 
 
 ### Processing
 * The `/pipeline` directory contains code used for retrieving, processing and consolidating the raw data from the Sequence Read Archive.
+* `/visualization/setup.R` contains helper functions used in the scripts below.
 * `/analysis/make_filtered_data.R` requires one input file, `taxonomic_table.csv`. This can be downloaded [from Zenodo](https://doi.org/10.5281/zenodo.8186993) (as `taxonomic_table.csv.gz`), decompressed, and used without modification. This script generates the data files used in all the other scripts.
 
 ### Analysis
@@ -19,7 +20,6 @@ The `/analysis` directory contains code used to generate and evaluate data for t
 ### Visualization
 The `/visualization` directory contains the R code used to generate the figures in our manuscript.
 
-* `setup.R` contains helper functions used in the scripts for generating figures 1 and 2.
 * `map_setup.R` lists the steps for installing the dependencies for generating the map in Figure 2A.
 * `figure1.R` generates the panels in Figure 1 and associated supplementary material. It requires one external file, `rarefaction.rds`, that is stored in the `/data` directory.
 * `visualization/figure2.R` generates the panels in Figure 2 and associated supplementary material. It requires several external files:
@@ -31,6 +31,13 @@ The `/visualization` directory contains the R code used to generate the figures 
   * Generated bo `pcoa.R`:
     * `nmds.rds`
     * `pcoa_points.rds`
+* `figure3.R` generates the panels in Figure 3 and associated supplementary material. It requires one external file, `unfiltered_rarefaction_by_read.rds`, that is stored in the `/data` directory.
+* `figure4.R` generates the panels in Figure 4. It requires several external files, all available in the `/data` directory:
+  * `diff_taxa_counts_for_4A.rds`
+  * `fig4A_labels.rds`
+  * `diff_abundant_pvalues_for_4B.rds`
+  * `metadata_for_diffAbundance20230919.rds`
+  * `taxon_names.tsv`
 
 --
 If you have any questions, please contact corresponding author Ran Blekhman at blekhman (at) uchicago.edu. Thanks.

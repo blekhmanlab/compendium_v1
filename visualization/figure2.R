@@ -29,7 +29,6 @@ regioncolors <- setNames(c(
   "#e69d00",
   "#f0e442",
   "#d55e00"
-  #"gray"
 ), regionlist)
 # colors:
 region_scale <- scale_fill_manual(values=regioncolors, aesthetics=c('fill'))
