@@ -31,6 +31,7 @@ The `/visualization` directory contains the R code used to generate the figures 
   * Generated bo `pcoa.R`:
     * `nmds.rds`
     * `pcoa_points.rds`
+* `compendium_functions.R` sets up and imports libraries used for figures 3 and 4.
 * `figure3.R` generates the panels in Figure 3 and associated supplementary material. It requires one external file, `unfiltered_rarefaction_by_read.rds`, that is stored in the `/data` directory.
 * `figure4.R` generates the panels in Figure 4. It requires several external files, all available in the `/data` directory:
   * `diff_taxa_counts_for_4A.rds`
