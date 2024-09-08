@@ -1,6 +1,6 @@
 #load the input file
 #this contains the number of taxa that are differentially abundant between each region-region pair
-taxaCounts <- readRDS('diff_taxa_counts_for_4A.rds')
+taxaCounts <- readRDS('diff_taxa_counts_for_5A.rds')
 labels <- readRDS('fig4A_labels.rds')
 
 plot_region_order <- c("Australia/New Zealand","Central and Southern Asia","Eastern and South-Eastern Asia","Latin America and the Caribbean",
@@ -53,7 +53,7 @@ overview <- wrap_elements(bubble + label + plot_layout(heights = c(39,1)))
 
 
 ##INPUTS
-#'diff_abundant_pvalues_for_4B.rds', which contains results of the differential abundance analysis
+#'diff_abundant_pvalues_for_5B.rds', which contains results of the differential abundance analysis
 #'diff_abundant_taxa.rds' is a list of the taxa included in the differential abundance analysis
 #'metadata_for_diffAbundance20230919.rds' is the metadata file used for the differential abundance analysis
 #'taxon_names.tsv' contains a list of the full name of the taxon as listed in the compendium, and the parsed genus name
@@ -61,12 +61,12 @@ overview <- wrap_elements(bubble + label + plot_layout(heights = c(39,1)))
 library(ggridges)
 library(viridis)
 
-pvals <- readRDS('diff_abundant_pvalues_for_4B.rds') #load the data containing the p values from the 
+pvals <- readRDS('diff_abundant_pvalues_for_5B.rds') #load the data containing the p values from the 
 genus <- readRDS('genus.rds')
 taxa_in_analysis <- readRDS('diff_abundant_taxa.rds') #list of taxa included in the differential abundance analysis
 keepTaxa <- colnames(genus) %in% taxa_in_analysis #we want to get rid of taxa that were excluded from our analysis
 
-metadata <- readRDS('metadata_for_diffAbundance20230919.rds')
+metadata <- readRDS('metadata_for_diffAbundance.rds')
 keepSamples <- rownames(genus) %in% metadata$sample #we want to get rid of samples that were excluded from our analysis
 genus[genus == 0] <- 1
 genus.rel <- make_rel(genus)
@@ -230,8 +230,6 @@ ridges <- wrap_elements(ggplot(data=genus.long) + geom_density_ridges(aes(x=log1
     breaks = c(-5,-1)
   ) + facet_grid(~taxon)
 )
-
-
 
 #this is the layout we want for the figure
 layout2 <- "

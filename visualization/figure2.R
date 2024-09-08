@@ -1,13 +1,10 @@
+library(dplyr)
 library(ggplot2)
 library(vegan) # for shannon
 library(scales)
 library(patchwork)
 library(ggridges)
 library(ggnewscale) # for gray backgrounds of heat maps
-# for maps:
-library(rnaturalearth)
-library(sf)
-library(grid)
 
 regionlist <- c(
   'Europe and Northern America',
@@ -118,7 +115,7 @@ reordered <- points.annotated %>%
 xlims <- c(-10.5, 12.5)
 ylims <- c(-8, 11)
 regionscatter <- ggplot(reordered, aes(x=mds1, y=mds2, color=region)) +
-  geom_point(size=0.1, alpha=0.5) + #* (blend("lighten") + blend("multiply", alpha = 0.5)) +
+  geom_point(size=0.1, alpha=0.5) +
   theme_bw() +
   labs(
     x='',
@@ -143,17 +140,24 @@ regionscatter <- ggplot(reordered, aes(x=mds1, y=mds2, color=region)) +
 ###################
 # Region-level density plots
 ##################
-region_heat <- function(reg, xlab, ylab) {
-  toplot <- points.annotated %>% filter(region == reg)
+region_heat <- function(reg, xlab, ylab, newxlims, newylims, bins, v1, v2) {
+  toplot <- points.annotated %>%
+    filter(region == reg) %>%
+    select(matches(c(v1,v2))) # only grab the two dimensions specified
 
-  heat <- ggplot(toplot, aes(x=mds1, y=mds2) ) +
-            geom_bin_2d(data=points.annotated, bins=30) +
+  background <- points.annotated %>%
+    select(matches(c(v1,v2)))
+
+  colnames(toplot) <- c('v1','v2')
+  colnames(background) <- c('v1','v2')
+  heat <- ggplot(toplot, aes(x=v1, y=v2) ) +
+            geom_bin_2d(data=background, bins=bins) +
             scale_colour_gradient(low='#d1d1d1', high='#d1d1d1', aesthetics='fill') +
             new_scale('fill') +
             geom_bin_2d(data=toplot, bins = 30)+
             scale_fill_continuous(type = "viridis") +
-            scale_x_continuous(limits=xlims, expand=c(0,0)) +
-            scale_y_continuous(limits=ylims, expand=c(0,0)) +
+            scale_x_continuous(limits=newxlims, expand=c(0,0)) +
+            scale_y_continuous(limits=newylims, expand=c(0,0)) +
             geom_vline(xintercept=0) +
             geom_hline(yintercept=0) +
             theme_bw() +
@@ -169,14 +173,61 @@ region_heat <- function(reg, xlab, ylab) {
   return(heat)
 }
 
-# Figure 2E
-a1 <- region_heat('Europe and Northern America', '', '')
-b1 <- region_heat('Eastern and South-Eastern Asia', '', '')
-c1 <- region_heat('Sub-Saharan Africa', '', '')
-d1 <- region_heat('Central and Southern Asia', paste('MDS1 (', round(nmds$eigen[1]/eigen_total,1), '%)', sep=''),'MDS2')
-e1 <- region_heat('Australia/New Zealand', '', '')
-f1 <- region_heat('Northern Africa and Western Asia', '', '')
-g1 <- region_heat('Latin America and the Caribbean', '', '')
+a1 <- region_heat('Europe and Northern America', '', '', xlims, ylims, 30, 'mds1','mds2')
+b1 <- region_heat('Eastern and South-Eastern Asia', '', '', xlims, ylims, 30, 'mds1','mds2')
+c1 <- region_heat('Sub-Saharan Africa', '', '', xlims, ylims, 30, 'mds1','mds2')
+d1 <- region_heat('Central and Southern Asia', paste('MDS1 (', round(nmds$eigen[1]/eigen_total,1), '%)', sep=''),'MDS2', xlims, ylims, 30, 'mds1','mds2')
+e1 <- region_heat('Australia/New Zealand', '', '', xlims, ylims, 30, 'mds1','mds2')
+f1 <- region_heat('Northern Africa and Western Asia', '', '', xlims, ylims, 30, 'mds1','mds2')
+g1 <- region_heat('Latin America and the Caribbean', '', '', xlims, ylims, 30, 'mds1','mds2')
+
+########### Supplemental   ############
+build_page <- function(v1, v2) {
+  newbincount <- 50
+  # we need the index of the axis being described so 
+  # we can get the variance explained
+  i1 <- strtoi(substr(v1, 4, 4))
+  i2 <- strtoi(substr(v2, 4, 4))
+
+  findmax <- points.annotated %>%
+    select(matches(c(v1,v2))) # only grab the two dimensions specified
+  colnames(findmax) <- c('v1','v2')
+  subxlims <- c(min(findmax$v1)*1.1, max(findmax$v1)*1.1)
+  subylims <- c(min(findmax$v2)*1.1, max(findmax$v2)*1.1)
+  print(subxlims)
+  print(subylims)
+  a1 <- region_heat('Europe and Northern America',
+    paste(toupper(v1), ' (', round(nmds$eigen[i1]/eigen_total,1), '%)', sep=''),
+    paste(toupper(v2), ' (', round(nmds$eigen[i2]/eigen_total,1), '%)', sep=''),
+    subxlims,subylims, newbincount,
+    v1, v2
+  )
+  b1 <- region_heat('Eastern and South-Eastern Asia', '', '',subxlims,subylims,newbincount,v1, v2)
+  c1 <- region_heat('Sub-Saharan Africa', '', '',subxlims,subylims,newbincount,v1, v2)
+  d1 <- region_heat('Central and Southern Asia', '', '',subxlims,subylims,newbincount, v1, v2)
+  e1 <- region_heat('Australia/New Zealand', '', '',subxlims,subylims,newbincount,v1, v2)
+  f1 <- region_heat('Northern Africa and Western Asia', '', '',subxlims,subylims,newbincount,v1, v2)
+  g1 <- region_heat('Latin America and the Caribbean', '', '',subxlims,subylims,newbincount,v1, v2)
+
+  return(a1+b1+c1+d1+e1+f1+g1)
+}
+
+page1 <- build_page('mds1','mds2')
+page2 <- build_page('mds1','mds3')
+page3 <- build_page('mds2','mds3')
+page4 <- build_page('mds1','mds4')
+page5 <- build_page('mds2','mds4')
+page6 <- build_page('mds3','mds4')
+
+ggsave(plot=page1, file='S8_pcoa.pdf', device='pdf', height=9, width=8, units='in')
+ggsave(plot=page2, file='S9_pcoa.pdf', device='pdf', height=9, width=8, units='in')
+ggsave(plot=page3, file='S10_pcoa.pdf', device='pdf', height=9, width=8, units='in')
+ggsave(plot=page4, file='S11_pcoa.pdf', device='pdf', height=9, width=8, units='in')
+ggsave(plot=page5, file='S12_pcoa.pdf', device='pdf', height=9, width=8, units='in')
+ggsave(plot=page6, file='S13_pcoa.pdf', device='pdf', height=9, width=8, units='in')
+
+##############################
+
 
 mds_ridges <- function(mds, ylab) {
   toplot <- points.annotated %>%
@@ -229,7 +280,7 @@ pmds1 <- mds_ridges('mds1', T)
 pmds2 <- mds_ridges('mds2', FALSE)
 pmds3 <- mds_ridges('mds3', FALSE)
 pmds4 <- mds_ridges('mds4', FALSE)
-# Supplementary Figure 13
+# (for supplement)
 pmds5 <- mds_ridges('mds5', T)
 pmds6 <- mds_ridges('mds6', FALSE)
 pmds7 <- mds_ridges('mds7', FALSE)
@@ -238,9 +289,38 @@ pmds8 <- mds_ridges('mds8', FALSE)
 allmds <- pmds1 + pmds2 + pmds3 + pmds4 + 
   pmds5 + pmds6 + pmds7 + pmds8 +
   plot_layout(ncol=4, nrow=2)
+ggsave('allmds.pdf', plot=allmds, device='pdf', height=5.6, width=10, units='in')
 
-ggsave('allmds.pdf', plot=allmds, device='pdf',
-       height=5.6, width=10, units='in')
+
+# Test differences in mds distributions
+if(FALSE) {
+  kstest_region <- function(region, mds) {
+    ks.test(
+      points.annotated[points.annotated$region==region,][[mds]],
+      points.annotated[!points.annotated$region==region,][[mds]]
+    )
+  }
+  kstest_region('Europe and Northern America', 'mds1')
+  kstest_region('Europe and Northern America', 'mds2')
+  kstest_region('Europe and Northern America', 'mds3')
+  kstest_region('Europe and Northern America', 'mds4')
+  
+  kstest_region('Latin America and the Caribbean', 'mds1')
+  kstest_region('Latin America and the Caribbean', 'mds2')
+  kstest_region('Latin America and the Caribbean', 'mds3')
+  kstest_region('Latin America and the Caribbean', 'mds4')
+  
+  kstest_region('Australia/New Zealand', 'mds1')
+  
+  kstest_regions <- function(region1, region2, mds) {
+    ks.test(
+      points.annotated[points.annotated$region==region1,][[mds]],
+      points.annotated[points.annotated$region==region2,][[mds]]
+    )
+  }
+  kstest_regions('Europe and Northern America', 'Australia/New Zealand', 'mds1')
+  kstest_regions('Sub-Saharan Africa', 'Eastern and South-Eastern Asia', 'mds4')
+}
 
 ########## Read depth and diversity
 working <- readRDS('filtered.rds')
@@ -291,8 +371,8 @@ depth <- data  %>%
     plot.tag.position = c(0.1,0.965)
   )
 
-
-# Figure 2B
+####################
+# (Bar plot: samples per region)
 ###################
 rename_region <- function(data, oldname, newname) {
   data[data$printname==oldname,]$printname = newname
@@ -390,11 +470,79 @@ unrarefied$region <- factor(unrarefied$region,
                               'Latin America and the Caribbean',
                               'Oceania'
                             )))
-# Figure 2B
+
+###### Supplemental figure for rarefaction results
+# rarefaction_diversity.rds is calculated by diversity_rarefaction.R
+
+# We do this here because panel 2C requires the "alphadata" variable
+alpha <- readRDS('rarefaction_diversity.rds') %>%
+  filter(!region %in% c('unknown','','Oceania'))
+
+alpha$region <- factor(alpha$region,
+                        levels=rev(c(
+                          'Europe and Northern America',
+                          'Eastern and South-Eastern Asia',
+                          'Sub-Saharan Africa',
+                          'Central and Southern Asia',
+                          'Australia/New Zealand',
+                          'Northern Africa and Western Asia',
+                          'Latin America and the Caribbean',
+                          'Oceania'
+                        )))
+
+conf_interval <- function(data, side) {
+  result <- t.test(data)
+  
+  if(side == 'bottom') {
+    # bottom of the interval
+    return(result$conf.int[1])
+  }
+  # otherwise, return the top
+  return(result$conf.int[2])
+}
+
+alphadata <- alpha %>%
+  group_by(region) %>%
+  summarise(
+    sd=sd(diversity),
+    mean=mean(diversity),
+    n=length(diversity),
+    median=median(diversity),
+    conf_bottom = conf_interval(diversity, 'bottom'),
+    conf_top = conf_interval(diversity, 'top'),
+  ) %>%
+  mutate(
+    se = sd / sqrt(n)
+  )
+
+# Supplementary table
+write.table(alphadata, file='alpha_summary.tsv',
+            sep='\t', row.names = F)
+
+rareplot <- ggplot(alphadata,
+         aes(x=mean, y=region, xmin=conf_bottom,
+             xmax=conf_top, color=region)) +
+  geom_point() +
+  geom_errorbar() +
+  scale_fill_manual(values=regioncolors, aesthetics=c('color')) +
+  theme_bw() +
+  labs(x='Shannon diversity', y='Region') +
+  theme(
+    legend.position='none'
+  )
+ggsave('rarefaction.pdf', plot=rareplot, device='pdf', height=10.2, width=9.6, units='in')
+
+
+
+depthmedians <- data %>%
+  group_by(region) %>%
+  summarise(median=median(total))
+########################################
+
 rawdiv <- ggplot(unrarefied, aes(x=shannon, y=region, fill=region)) +
   geom_violin(draw_quantiles = 0.5) +
   region_scale +
-  #geom_point(data=alphadata, mapping=aes(y=region, x=mean), size=2) +
+  geom_point(data=alphadata, mapping=aes(y=region, x=mean), size=2) +
   theme_bw() +
   theme(
     axis.title.y=element_blank(),
@@ -406,9 +554,7 @@ rawdiv <- ggplot(unrarefied, aes(x=shannon, y=region, fill=region)) +
   ) +
   labs(x='Shannon diversity')
 
-###########
-# Supplementary Figure 4
-###########
+# Supplemental figure for other alpha diversity measures
 unrarefied.simpson <- only_regional.annotated %>%
   select(!c('join','region','total','sample.y')) %>%
   diversity(index='simpson') %>%
@@ -464,12 +610,10 @@ rawdiv.shannon <- ggplot(unrarefied, aes(x=shannon, y=region, fill=region)) +
 rawdiv.simpson <- ggplot(unrarefied.simpson, aes(x=simpson, y=region, fill=region)) +
   geom_boxplot(outlier.shape = NA) +
   region_scale +
-  #geom_point(data=alphadata, mapping=aes(y=region, x=mean), size=2) +
   theme_bw() +
   theme(
     axis.title.y=element_blank(),
     axis.text.x = element_text(size=11),
-    #axis.text.y = element_blank(),
     axis.ticks.y = element_blank(),
     legend.position = 'none'
   ) +
@@ -489,90 +633,33 @@ rawdiv.specnumber <- ggplot(unrarefied.specnumber, aes(x=specnumber, y=region, f
   ) +
   labs(x='Species count')
 
-rawdiv.shannon / rawdiv.simpson / rawdiv.specnumber
+divplot <- rawdiv.shannon / rawdiv.simpson / rawdiv.specnumber
+
+ggsave('diversity.pdf', plot=divplot, device='pdf', height=10.2, width=9.6, units='in')
 
 
-###### Supplementary Figure 5
-alpha <- readRDS('rarefaction_diversity.rds') %>%
-  filter(!region %in% c('unknown','','Oceania'))
 
-alpha$region <- factor(alpha$region,
-                        levels=rev(c(
-                          'Europe and Northern America',
-                          'Eastern and South-Eastern Asia',
-                          'Sub-Saharan Africa',
-                          'Central and Southern Asia',
-                          'Australia/New Zealand',
-                          'Northern Africa and Western Asia',
-                          'Latin America and the Caribbean',
-                          'Oceania'
-                        )))
-
-conf_interval <- function(data, side) {
-  result <- t.test(data)
-  
-  if(side == 'bottom') {
-    # bottom of the interval
-    return(result$conf.int[1])
-  }
-  # otherwise, return the top
-  return(result$conf.int[2])
-}
-
-alphadata <- alpha %>%
-  group_by(region) %>%
-  summarise(
-    sd=sd(diversity),
-    mean=mean(diversity),
-    n=length(diversity),
-    median=median(diversity),
-    conf_bottom = conf_interval(diversity, 'bottom'),
-    conf_top = conf_interval(diversity, 'top'),
-  ) %>%
-  mutate(
-    se = sd / sqrt(n)
-  )
-
-# Supplementary Table 5
-write.table(alphadata, file='panels/alpha_summary.tsv',
-            sep='\t', row.names = F)
-
-rareplot <- ggplot(alphadata,
-         aes(x=mean, y=region, xmin=conf_bottom,
-             xmax=conf_top, color=region)) +
-  geom_point() +
-  geom_errorbar() +
-  #geom_pointrange() +
-  scale_fill_manual(values=regioncolors, aesthetics=c('color')) +
-  theme_bw() +
-  labs(x='Shannon diversity', y='Region') +
-  theme(
-    legend.position='none'
-  )
-ggsave('rarefaction.pdf', plot=rareplot, device='pdf', height=10.2, width=9.6, units='in')
-
-depthmedians <- data %>%
-  group_by(region) %>%
-  summarise(median=median(total))
 
 ###############
 # Figure 2A
 ###############
 
+library(rnaturalearth)
+library(sf)
+library(grid)
+
 regions <- read.csv('regions.csv', header=F) %>%
   rename(iso_a2=V1, country=V2, region=V3)
-regions[regions$country=='Namibia',]$iso_a2 = 'NA' # parsing problem
+regions[regions$country=='Namibia',]$iso_a2 = 'NA'
 
 toplot <- ne_countries(scale='medium', type='map_units', returnclass = 'sf') %>%
   left_join(regions, by = c('iso_a2'))
 
 # How many entries don't have a regional assignment?
 filter(toplot, is.na(region)) %>% nrow()
-
-# Check to see which ones are still missing a region
-# and what the rnaturalearth "subregion" entry is for them
+# Clean up subregions that don't line up exactly with our data
 table(toplot[is.na(toplot$region),]$subregion)
-# Set regional annotations using existing subregion assignment
+
 toplot[is.na(toplot$region) & toplot$subregion=='Caribbean',]$region <- 'Latin America and the Caribbean'
 toplot[is.na(toplot$region) & toplot$subregion=='Eastern Africa',]$region <- 'Sub-Saharan Africa'
 toplot[is.na(toplot$region) & toplot$subregion=='Northern Europe',]$region <- 'Europe and Northern America'
@@ -603,14 +690,10 @@ mapplot <- ggplot(data=toplot) +
   geom_sf(aes(fill=region), color=NA, size=0.01) +
   coord_sf(crs = "+proj=eqearth +wktext") + # changes the projection
   labs(fill='Region membership') +
-  #scale_fill_brewer(palette='Set1') +
   region_scale +
   theme(
     legend.position='none',
-    #panel.grid.major = element_blank(),
-    #panel.grid.minor = element_blank(),
     panel.background = element_rect(fill = "white"),
-    #panel.grid.major = element_line(linewidth = 0.25, linetype = 'solid', color = "grey"),
     panel.border = element_blank(),
     axis.text.x=element_blank(),
     axis.ticks.x=element_blank()
@@ -621,19 +704,19 @@ mapplot <- ggplot(data=toplot) +
 ######## Final assembly
 ###############
 
-toprow <- wrap_elements(full=mapplot) + plot_spacer() + 
+toprow <- plot_spacer() + 
   samplecount_plot + plot_spacer() +
   rawdiv + plot_spacer() +
   depth + plot_spacer() +
   plot_layout(
     nrow=1,
-    widths=c(10,-1.5, 8,-0.7, 5,-0.85, 3, 0.0)
+    widths=c(9.5, 7,-0.7, 4,-0.85, 4, 0.0)
   )
 
 # The regionheats layout looks so strange because
 # we want to minimize the whitespace between plots
 hgap <- -0.1
-vgap <- -0.25
+vgap <- -0.29
 
 regionheats <- regionscatter + plot_spacer() + a1 + plot_spacer() + b1 + plot_spacer() + c1 +
   plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + plot_spacer() + 
@@ -658,13 +741,6 @@ full <- toprow /
   wrap_elements(plot=regionheats) /
   plot_spacer() /
   wrap_elements(bottomrow) +
-  plot_layout(heights=c(3, 7, -0.75, 4)) +
-  plot_annotation(tag_levels = 'A') #&
-  #theme(plot.tag.position=c(0,1))
+  plot_layout(heights=c(3,5, -0.55, 4))
 
-full &
-  theme(
-    plot.tag=element_text(face='bold')
-  )
-
-ggsave('panels/figure2.pdf', plot=full, device='pdf', height=10.2, width=9.6, units='in')
+ggsave('fig2.pdf', plot=full, device='pdf', height=10.2, width=8.7, units='in')
