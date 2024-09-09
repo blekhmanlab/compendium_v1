@@ -15,16 +15,16 @@ rclr <- function(a) {
 find_taxa <- function(regionselect, pc_cutoff, factor_cutoff) {
   print(date())
   set.seed(42)
-  ohwow <- prcomp(
+  pca <- prcomp(
     data.transformed[regions==regionselect,],
     tol=0,
     center=FALSE
   )
   print(date())
   
-  loadings <- as.data.frame(ohwow$rotation)
+  loadings <- as.data.frame(pca$rotation)
   
-  var_explained = ohwow$sdev^2 /sum(ohwow$sdev^2)
+  var_explained = pca$sdev^2 /sum(pca$sdev^2)
   print('calculating scree data')
   scree <- data.frame(
     axis=ncol(data.transformed)+1-row_number(var_explained),
@@ -36,7 +36,6 @@ find_taxa <- function(regionselect, pc_cutoff, factor_cutoff) {
   # The evaluate the variance explained by each variable within those 10 PCs.
   print('Evaluating loadings')
   sums <- loadings %>%
-    #dplyr::select(c(1:sum(var_explained > 0.01))) %>%
     dplyr::select(c(1:(1+sum(scree$cumulative < pc_cutoff)))) %>%
     mutate(explained=rowSums(.^2))  %>%
     arrange(explained)
@@ -74,9 +73,6 @@ colnames(data.transformed) <- gsub('-','_', colnames(data.transformed))
 colnames(data.transformed) <- gsub('\\(','_', colnames(data.transformed))
 colnames(data.transformed) <- gsub('\\)','_', colnames(data.transformed))
 
-
-
-
 australia <- find_taxa('Australia/New Zealand', pc_cutoff=0.5, factor_cutoff=0.5)
 csasia <- find_taxa('Central and Southern Asia', pc_cutoff=0.5, factor_cutoff=0.5)
 ese_asia <- find_taxa('Eastern and South-Eastern Asia', pc_cutoff=0.5, factor_cutoff=0.5)
@@ -87,7 +83,6 @@ safrica <- find_taxa('Sub-Saharan Africa', pc_cutoff=0.5, factor_cutoff=0.5)
 
 get_topn <- function(data) {
   n = 10
-  
   data %>%
     top_n(n, explained) %>%
     rownames() %>%
@@ -95,8 +90,8 @@ get_topn <- function(data) {
 }
 
 tokeep <- c(get_topn(australia), get_topn(csasia),
-          get_topn(ese_asia), get_topn(europe),
-          get_topn(latam), get_topn(nafrica),
-          get_topn(safrica)
-        ) %>%
-        unique()
+    get_topn(ese_asia), get_topn(europe),
+    get_topn(latam), get_topn(nafrica),
+    get_topn(safrica)
+  ) %>%
+  unique()

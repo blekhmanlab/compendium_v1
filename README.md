@@ -12,10 +12,20 @@ This repository contains code related to the manuscript "Integration of 168,000 
 ### Analysis
 The `/analysis` directory contains code used to generate and evaluate data for the project.
 * `pcoa.R` contains the code used for the principal coordinates analysis in Figure 2.
-* `rarefaction.R` contains the code used for the taxonomic discovery rate analysis in Figure 1I.
+* `rarefaction.R` contains the code used for the taxonomic discovery rate analysis in Figure 1.
+* `rarefaction_diversity.R` contains the code used for the rarefaction analysis of Shannon diversity described in Figure 2.
 * `cluster_evaluation.R` contains the code used for the bootstrap analysis of clustering strength described in the manuscript.
 * `pca.R` contains the code used for the principal components analysis used to determine regional signatures described in the manuscript. It relies on one external file, `sample_metadata.tsv`, available in the paper's [associated Zenodo repository](https://doi.org/10.5281/zenodo.8186993).
 * `country_inference_check.R` contains the code used for the manual evaluation of the accuracy of the world region inference steps. The power calculation is first, followed by the procedure used to generate the randomly selected samples to validate.
+* `phylogenetic.sh` describes generating the Greengenes2-based classifications
+* The gain analysis illustrated in Supplementary Figure 5 has several files:
+  * `gain_setup.sh` does the data preparation
+  * `gain_iteration.sh` performs a proportion of the permutations
+  * `gain.R` plots the data as seen in the figure.
+* `evident.R` shows the script used to calculate the effect sizes illustrated in Figure 3G.
+* Several files show the process for the PERMANOVA analysis described in the results section about Figure 3:
+  * `filter_dist.py` does the data preparation
+  * `permanova.R` is the script used to run the analysis
 
 ### Visualization
 The `/visualization` directory contains the R code used to generate the figures in our manuscript.
